@@ -7,18 +7,47 @@ const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 
 class SlackClient {
 
-    constructor(token, botname, logLevel, log) {
+    constructor(token, nlp, botname, logLevel, log) {
         this._rtm = new RtmClient(token, {logLevel: logLevel});
         this._log = log;
+        this._nlp = nlp;
         this._botname = botname;
     }
 
     _handleOnMessage(message) {
 
         if(message.text && message.text.toLowerCase().includes(this._botname)) {
-            this._rtm.sendMessage('42', message.channel);
-        }
 
+            this._nlp.ask(message.text, (err, res) => {
+                
+                if(err) {
+                    this._log.fatal(err);
+                    return;
+                }
+
+
+                try {
+                    if(!res.intent || !res.intent[0] || !res.intent[0].value) {
+                        throw new Error("Could not extract intent");
+                    }
+
+                    const intent = require('./intents/' + res.intent[0].value + 'Intent');
+
+                    intent.process(res, this._log, (error, response) => {
+                        if(error) {
+                            this._log.fatal(error.message);
+                            return;
+                        }
+
+                        return this._rtm.sendMessage(response, message.channel);
+                    });
+                } catch(err) {
+                    this._log.info(err);
+                    this._log.info(res);
+                    return this._rtm.sendMessage("I don't know what you are talking about");
+                }
+            });   
+        }
     }
 
     _handleOnAuthenticated(rtmStartData) {
