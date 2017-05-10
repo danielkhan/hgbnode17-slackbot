@@ -27,6 +27,7 @@ const log = {
 module.exports = {
     slackToken: process.env.SLACK_TOKEN,
     witToken: process.env.WIT_TOKEN,
+    serviceTimeout: 30,
     botName: 'khan-bot',
     log: (env) => {
         if(env) return log[env]();
