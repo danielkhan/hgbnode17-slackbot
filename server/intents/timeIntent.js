@@ -12,7 +12,7 @@ module.exports.process = function process(intentData, log, cb) {
     request.get('http://127.0.0.1:3001/service/' + location)
     .then((res) => {
         if(!res.body.result) return cb('Error with time service');
-        return cb(null, `In ${res.body.result} is is now NO IDEA`);    
+        return cb(null, `In ${location} is is now ${res.body.result}`);
     });
 
 }
